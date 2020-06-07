@@ -16,13 +16,19 @@ nonterminal Stmt with pp;
 abstract production seq
 top::Stmt ::= s1::Stmt s2::Stmt
 {
-  top.pp = cat(s1.pp, s2.pp);
+  top.pp = ppConcat([s1.pp, line(), s2.pp]);
+}
+
+abstract production block
+top::Stmt ::= s::Stmt
+{
+  top.pp = braces(nestlines(2, s.pp));
 }
 
 abstract production assign
 top::Stmt ::= id::String e::Expr
 {
-  top.pp = pp"${text(id)} = ${e.pp};\n";
+  top.pp = pp"${text(id)} = ${e.pp};";
 }
 
 synthesized attribute wrapPP::Document;

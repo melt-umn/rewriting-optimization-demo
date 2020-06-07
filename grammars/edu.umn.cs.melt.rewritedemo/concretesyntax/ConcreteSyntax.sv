@@ -14,6 +14,8 @@ terminal Minus_t '-' association = left, precedence = 1;
 
 terminal LParen_t '(';
 terminal RParen_t ')';
+terminal LBrace_t '{';
+terminal RBrace_t '}';
 terminal Assign_t '=';
 terminal Semi_t ';';
 
@@ -33,6 +35,8 @@ nonterminal Stmt_c with ast<Stmt>;
 concrete productions top::Stmt_c
 | id::Identifier_t '=' e::Expr_c ';'
   { top.ast = assign(id.lexeme, e.ast); }
+| '{' s::Stmts_c '}'
+  { top.ast = block(s.ast); }
 
 nonterminal Expr_c with ast<Expr>;
 concrete productions top::Expr_c

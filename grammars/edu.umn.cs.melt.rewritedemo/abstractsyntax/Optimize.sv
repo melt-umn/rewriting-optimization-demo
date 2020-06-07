@@ -29,19 +29,26 @@ top::Root ::= s::Stmt
 {
   s.env = [];
 }
-
-aspect production assign
-top::Stmt ::= id::String e::Expr
-{
-  top.defs = [pair(id, e)];
-  e.env = top.env;
-}
 aspect production seq
 top::Stmt ::= s1::Stmt s2::Stmt
 {
   top.defs = s1.defs ++ s2.defs;
   s1.env = top.env;
   s2.env = s1.defs ++ top.env;
+}
+
+aspect production block
+top::Stmt ::= s::Stmt
+{
+  top.defs = [];
+  s.env = top.env;
+}
+
+aspect production assign
+top::Stmt ::= id::String e::Expr
+{
+  top.defs = [pair(id, e)];
+  e.env = top.env;
 }
 
 partial strategy attribute inlineStep =
@@ -51,10 +58,15 @@ partial strategy attribute inlineStep =
   end
   occurs on Expr;
 strategy attribute optimizeInline =
-  -- Not using innermost here, since we wish to rewrite the first child of seq,
+  -- Not simply using innermost here, since we wish to rewrite the first child of seq,
   -- redecorate the result, then rewrite the second child using the new env.
   -- Using innermost would cause both children to be rewritten in the same pass.
-  repeat(onceBottomUp(optimizeStep <+ inlineStep))
+  -- One implementation would be
+  -- repeat(onceBottomUp(optimizeStep <+ inlineStep))
+  -- A more efficient alternative is
+  (seq(optimizeInline, id) <* seq(id, optimizeInline)) <+ -- seq: rewrite the first child, then the second child
+  assign(id, innermost(optimizeStep <+ inlineStep)) <+    -- assign: perform an innermost rewrite of the expression
+  all(optimizeInline)                                     -- other Stmt/Root productions: optimize all the children
   occurs on Root, Stmt, Expr;
 
 propagate inlineStep on Expr;
