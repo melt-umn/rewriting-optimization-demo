@@ -32,10 +32,10 @@ top::Root_c ::= 'fun' n::Identifier_t '(' params::Params_c ')' '=' e::Expr_c ';'
 
 nonterminal Params_c with ast<[String]>;
 concrete productions top::Params_c
-| h::Identifier_t ',' t::Params_c
-  { top.ast = h.lexeme :: t.ast; }
-| h::Identifier_t
-  { top.ast = [h.lexeme]; }
+| h::Identifier_c ',' t::Params_c
+  { top.ast = h.ast :: t.ast; }
+| h::Identifier_c
+  { top.ast = [h.ast]; }
 |
   { top.ast = []; }
 
@@ -48,8 +48,8 @@ concrete productions top::Decls_c
 
 nonterminal Decl_c with ast<Decls>;
 concrete productions top::Decl_c
-| id::Identifier_t '=' e::Expr_c ';'
-  { top.ast = decl(id.lexeme, e.ast); }
+| id::Identifier_c '=' e::Expr_c ';'
+  { abstract decl; }
 
 nonterminal Expr_c with ast<Expr>;
 concrete productions top::Expr_c
@@ -63,7 +63,23 @@ concrete productions top::Expr_c
   { top.ast = const(toInteger(i.lexeme)); }
 | 'let' d::Decls_c 'in' e::Expr_c 'end'
   { abstract letE; }
-| id::Identifier_t
-  { top.ast = var(id.lexeme); }
+| id::Identifier_c
+  { abstract var; }
+| id::Identifier_c '(' e::Exprs_c ')'
+  { abstract app; }
 | '(' e::Expr_c ')'
   { top.ast = e.ast; }
+
+nonterminal Exprs_c with ast<Exprs>;
+concrete productions top::Exprs_c
+| h::Expr_c ',' t::Exprs_c
+  { abstract consExpr; }
+| h::Expr_c
+  { top.ast = consExpr(h.ast, nilExpr()); }
+|
+  { abstract nilExpr; }
+
+nonterminal Identifier_c with ast<String>;
+concrete productions top::Identifier_c
+| id::Identifier_t
+  { top.ast = id.lexeme; }

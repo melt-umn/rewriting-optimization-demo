@@ -68,6 +68,30 @@ top::Expr ::= id::String
   top.freeVars = [id];
 }
 
+abstract production app
+top::Expr ::= id::String args::Exprs
+{
+  top.pp = pp"${text(id)}(${ppImplode(pp", ", args.pps)})";
+  top.wrapPP = top.pp;
+  top.freeVars = args.freeVars;
+}
+
+nonterminal Exprs with pps, freeVars;
+
+abstract production consExpr
+top::Exprs ::= h::Expr t::Exprs
+{
+  top.pps = h.pp :: t.pps;
+  top.freeVars = h.freeVars ++ t.freeVars;
+}
+
+abstract production nilExpr
+top::Exprs ::=
+{
+  top.pps = [];
+  top.freeVars = [];
+}
+
 nonterminal Decls with pps, freeVars;
 
 abstract production seq

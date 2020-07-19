@@ -16,13 +16,13 @@ strategy attribute optimize =
   all(optimize) <*
   ((optimizeStep <* optimize) <+ id);
 
-attribute optimizeStep occurs on Expr, Decls;
-attribute optimize occurs on FunDecl, Expr, Decls;
-propagate optimizeStep on Expr, Decls;
-propagate optimize on FunDecl, Expr, Decls;
+attribute optimizeStep occurs on Expr;
+attribute optimize occurs on FunDecl, Expr, Exprs, Decls;
+propagate optimizeStep on Expr;
+propagate optimize on FunDecl, Expr, Exprs, Decls;
 
-autocopy attribute env::[Pair<String Maybe<Expr>>] occurs on Decls, Expr;
-autocopy attribute usedVars::[String] occurs on Decls;
+autocopy attribute env::[Pair<String Maybe<Expr>>] occurs on Expr, Exprs, Decls;
+inherited attribute usedVars::[String] occurs on Decls;
 synthesized attribute defs::[Pair<String Maybe<Expr>>] occurs on Decls;
 
 aspect production funDecl
@@ -45,6 +45,7 @@ top::Decls ::= d1::Decls d2::Decls
   d1.env = top.env;
   d2.env = d1.defs ++ top.env;
   d1.usedVars = d2.freeVars ++ removeAllBy(stringEq, map(fst, d2.defs), top.usedVars);
+  d2.usedVars = top.usedVars;
 }
 
 aspect production empty
@@ -87,7 +88,7 @@ strategy attribute optimizeInline =
    (letE(optimizeInline, id) <* letE(id, optimizeInline) <* letE(optimizeInline, id)) <+
    all(optimizeInline))
   <* (try((optimizeStep <+ inlineStep) <* optimizeInline))
-  occurs on FunDecl, Expr, Decls;
+  occurs on FunDecl, Expr, Exprs, Decls;
 
 propagate inlineStep on Expr, Decls;
-propagate optimizeInline on FunDecl, Expr, Decls;
+propagate optimizeInline on FunDecl, Expr, Exprs, Decls;
