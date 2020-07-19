@@ -1,4 +1,4 @@
-fun e2(foo, bar) =
+fun e2() =
   let
     a = foo - -bar;
     b = a + (10 - 4);

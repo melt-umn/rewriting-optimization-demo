@@ -1,0 +1,8 @@
+fun e5(x, y) =
+  let
+    a = 42 - 24; -- Inlined because it is a constant
+    b = x + a;   -- Not inlined
+    c = y - a;   -- Inlined because it is used in only one place
+    d = b + c;   -- Eliminated because it is not used
+  in b + b + c
+  end;
