@@ -64,16 +64,14 @@ top::Decls ::= id::String e::Expr
 }
 
 partial strategy attribute inlineStep =
+  rule on top::Expr of
+  | var(n) when lookupBy(stringEq, n, top.env) matches just(just(e)) -> e
+  | letE(empty(), e) -> e
+  end <+
   rule on top::Decls of
   | decl(id, e) when !containsBy(stringEq, id, top.usedVars) -> empty()
   | seq(d, empty()) -> d
   | seq(empty(), d) -> d
-  end <+
-  rule on top::Expr of
-  | letE(empty(), e) -> e
-  -- var(n) when lookup(n, top.env) matches just(just(e)) -> e
-  | var(n) when lookupBy(stringEq, n, top.env).isJust && lookupBy(stringEq, n, top.env).fromJust.isJust ->
-    lookupBy(stringEq, n, top.env).fromJust.fromJust
   end
   occurs on Expr, Decls;
 strategy attribute optimizeInline =
@@ -87,7 +85,7 @@ strategy attribute optimizeInline =
   ((seq(optimizeInline, id) <* seq(id, optimizeInline) <* seq(optimizeInline, id)) <+
    (letE(optimizeInline, id) <* letE(id, optimizeInline) <* letE(optimizeInline, id)) <+
    all(optimizeInline))
-  <* (try((optimizeStep <+ inlineStep) <* optimizeInline))
+  <* try((optimizeStep <+ inlineStep) <* optimizeInline)
   occurs on FunDecl, Expr, Exprs, Decls;
 
 propagate inlineStep on Expr, Decls;
