@@ -5,15 +5,6 @@ imports silver:langutil:pp;
 
 synthesized attribute freeVars::[String];
 
-nonterminal FunDecl with pp, freeVars;
-
-production funDecl
-top::FunDecl ::= name::String args::[String] body::Expr
-{
-  top.pp = pp"fun ${text(name)}(${ppImplode(pp", ", map(text, args))}) =${nest(2, cat(line(), body.pp))};";
-  top.freeVars = removeAllBy(stringEq, args, body.freeVars);
-}
-
 synthesized attribute wrapPP::Document;
 nonterminal Expr with pp, wrapPP, freeVars;
 
@@ -113,4 +104,13 @@ top::Decls ::= id::String e::Expr
 {
   top.pps = [pp"${text(id)} = ${e.pp};"];
   top.freeVars = e.freeVars;
+}
+
+nonterminal FunDecl with pp, freeVars;
+
+production funDecl
+top::FunDecl ::= name::String args::[String] body::Expr
+{
+  top.pp = pp"fun ${text(name)}(${ppImplode(pp", ", map(text, args))}) =${nest(2, cat(line(), body.pp))};";
+  top.freeVars = removeAllBy(stringEq, args, body.freeVars);
 }
