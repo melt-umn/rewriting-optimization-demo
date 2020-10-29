@@ -17,57 +17,76 @@ strategy attribute optimize =
   ((optimizeStep <* optimize) <+ id);
 
 attribute optimizeStep occurs on Expr;
-attribute optimize occurs on Root, Stmt, Expr;
+attribute optimize occurs on FunDecl, Expr, Exprs, Decls;
 propagate optimizeStep on Expr;
-propagate optimize on Root, Stmt, Expr;
+propagate optimize on FunDecl, Expr, Exprs, Decls;
 
-autocopy attribute env::[Pair<String Expr>] occurs on Stmt, Expr;
-synthesized attribute defs::[Pair<String Expr>] occurs on Stmt;
+autocopy attribute env::[Pair<String Maybe<Expr>>] occurs on Expr, Exprs, Decls;
+inherited attribute usedVars::[String] occurs on Decls;
+synthesized attribute defs::[Pair<String Maybe<Expr>>] occurs on Decls;
 
-aspect production root
-top::Root ::= s::Stmt
+aspect production funDecl
+top::FunDecl ::= name::String args::[String] body::Expr
 {
-  s.env = [];
+  body.env = map(pair(_, nothing()), args);
 }
+
+aspect production letE
+top::Expr ::= d::Decls e::Expr
+{
+  d.usedVars = e.freeVars;
+  e.env = d.defs ++ top.env;
+}
+
 aspect production seq
-top::Stmt ::= s1::Stmt s2::Stmt
+top::Decls ::= d1::Decls d2::Decls
 {
-  top.defs = s1.defs ++ s2.defs;
-  s1.env = top.env;
-  s2.env = s1.defs ++ top.env;
+  top.defs = d1.defs ++ d2.defs;
+  d1.env = top.env;
+  d2.env = d1.defs ++ top.env;
+  d1.usedVars = d2.freeVars ++ removeAllBy(stringEq, map(fst, d2.defs), top.usedVars);
+  d2.usedVars = top.usedVars;
 }
 
-aspect production block
-top::Stmt ::= s::Stmt
+aspect production empty
+top::Decls ::=
 {
   top.defs = [];
-  s.env = top.env;
 }
 
-aspect production assign
-top::Stmt ::= id::String e::Expr
+aspect production decl
+top::Decls ::= id::String e::Expr
 {
-  top.defs = [pair(id, e)];
+  -- Inline constants and expressions with only one use
+  local inline::Boolean = null(e.freeVars) || length(filter(stringEq(id, _), top.usedVars)) <= 1; 
+  top.defs = [pair(id, if inline then just(e) else nothing())];
   e.env = top.env;
 }
 
 partial strategy attribute inlineStep =
   rule on top::Expr of
-  | var(n) when lookupBy(stringEq, n, top.env).isJust ->
-    lookupBy(stringEq, n, top.env).fromJust
+  | var(n) when lookupBy(stringEq, n, top.env) matches just(just(e)) -> e
+  | letE(empty(), e) -> e
+  end <+
+  rule on top::Decls of
+  | decl(id, e) when !containsBy(stringEq, id, top.usedVars) -> empty()
+  | seq(d, empty()) -> d
+  | seq(empty(), d) -> d
   end
-  occurs on Expr;
+  occurs on Expr, Decls;
 strategy attribute optimizeInline =
-  -- Not simply using innermost here, since we wish to rewrite the first child of seq,
-  -- redecorate the result, then rewrite the second child using the new env.
+  -- Not simply using innermost here, since for let and seq we wish to rewrite the first child,
+  -- redecorate the result, rewrite the second child using the new env, redecorate the result,
+  -- then rewrite the first child again with usedVars computed from the first child.
   -- Using innermost would cause both children to be rewritten in the same pass.
   -- One implementation would be
   -- repeat(onceBottomUp(optimizeStep <+ inlineStep))
   -- A more efficient alternative is
-  (seq(optimizeInline, id) <* seq(id, optimizeInline)) <+ -- seq: rewrite the first child, then the second child
-  assign(id, innermost(optimizeStep <+ inlineStep)) <+    -- assign: perform an innermost rewrite of the expression
-  all(optimizeInline)                                     -- other Stmt/Root productions: optimize all the children
-  occurs on Root, Stmt, Expr;
+  ((seq(optimizeInline, id) <* seq(id, optimizeInline) <* seq(optimizeInline, id)) <+
+   (letE(optimizeInline, id) <* letE(id, optimizeInline) <* letE(optimizeInline, id)) <+
+   all(optimizeInline))
+  <* try((optimizeStep <+ inlineStep) <* optimizeInline)
+  occurs on FunDecl, Expr, Exprs, Decls;
 
-propagate inlineStep on Expr;
-propagate optimizeInline on Root, Stmt, Expr;
+propagate inlineStep on Expr, Decls;
+propagate optimizeInline on FunDecl, Expr, Exprs, Decls;

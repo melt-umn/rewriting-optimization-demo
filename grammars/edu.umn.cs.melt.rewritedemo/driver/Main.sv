@@ -31,8 +31,13 @@ IOVal<Integer> ::= args::[String] ioIn::IO
           printM(result.parseErrors ++ "\n");
           return 3;
         } else {
-          ast::Root = result.parseTree.ast;
-          printM(show(80, ast.pp) ++ "\n\n============\n\n");
+          ast::FunDecl = result.parseTree.ast;
+          printM(show(80, ast.pp) ++ "\n");
+          printM("\n==============\n\n");
+          printM("Free variables: " ++ implode(", ", ast.freeVars) ++ "\n");
+          printM("\n==============\n\n");
+          printM(show(80, ast.optimize.pp) ++ "\n");
+          printM("\n==============\n\n");
           printM(show(80, ast.optimizeInline.pp) ++ "\n");
           return 0;
         }
