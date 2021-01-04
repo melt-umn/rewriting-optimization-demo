@@ -1,7 +1,5 @@
 grammar edu:umn:cs:melt:rewritedemo:abstractsyntax;
 
-imports core:monad;
-
 partial strategy attribute optimizeStep =
   rule on Expr of
   | add(e, const(0)) -> e
