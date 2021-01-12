@@ -48,7 +48,7 @@ top::Expr ::= d::Decls e::Expr
 {
   top.pp = pp"let ${nestlines(2, ppImplode(line(), d.pps))}in ${e.pp} end";
   top.wrapPP = top.pp;
-  top.freeVars = d.freeVars ++ removeAllBy(stringEq, map(fst, d.defs), e.freeVars);
+  top.freeVars = d.freeVars ++ removeAll(map(fst, d.defs), e.freeVars);
 }
 
 production var
@@ -89,7 +89,7 @@ production seq
 top::Decls ::= d1::Decls d2::Decls
 {
   top.pps = d1.pps ++ d2.pps;
-  top.freeVars = d1.freeVars ++ removeAllBy(stringEq, map(fst, d1.defs), d2.freeVars);
+  top.freeVars = d1.freeVars ++ removeAll(map(fst, d1.defs), d2.freeVars);
 }
 
 production empty
@@ -112,5 +112,5 @@ production funDecl
 top::FunDecl ::= name::String args::[String] body::Expr
 {
   top.pp = pp"fun ${text(name)}(${ppImplode(pp", ", map(text, args))}) =${nest(2, cat(line(), body.pp))};";
-  top.freeVars = removeAllBy(stringEq, args, body.freeVars);
+  top.freeVars = removeAll(args, body.freeVars);
 }

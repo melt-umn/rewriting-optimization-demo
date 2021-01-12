@@ -42,7 +42,7 @@ top::Decls ::= d1::Decls d2::Decls
   top.defs = d1.defs ++ d2.defs;
   d1.env = top.env;
   d2.env = d1.defs ++ top.env;
-  d1.usedVars = d2.freeVars ++ removeAllBy(stringEq, map(fst, d2.defs), top.usedVars);
+  d1.usedVars = d2.freeVars ++ removeAll(map(fst, d2.defs), top.usedVars);
   d2.usedVars = top.usedVars;
 }
 
@@ -63,11 +63,11 @@ top::Decls ::= id::String e::Expr
 
 partial strategy attribute inlineStep =
   rule on top::Expr of
-  | var(n) when lookupBy(stringEq, n, top.env) matches just(just(e)) -> e
+  | var(n) when lookup(n, top.env) matches just(just(e)) -> e
   | letE(empty(), e) -> e
   end <+
   rule on top::Decls of
-  | decl(id, e) when !containsBy(stringEq, id, top.usedVars) -> empty()
+  | decl(id, e) when !contains(id, top.usedVars) -> empty()
   | seq(d, empty()) -> d
   | seq(empty(), d) -> d
   end
