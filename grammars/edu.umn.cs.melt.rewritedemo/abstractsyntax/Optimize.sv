@@ -56,7 +56,7 @@ aspect production decl
 top::Decls ::= id::String e::Expr
 {
   -- Inline constants and expressions with only one use
-  local inline::Boolean = null(e.freeVars) || length(filter(stringEq(id, _), top.usedVars)) <= 1; 
+  local inline::Boolean = null(e.freeVars) || length(filter(eq(id, _), top.usedVars)) <= 1;
   top.defs = [pair(id, if inline then just(e) else nothing())];
   e.env = top.env;
 }
