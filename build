@@ -1,4 +1,6 @@
 #!/bin/bash
 
+set -e
+
 silver -o rewritedemo.jar -I grammars $@ edu:umn:cs:melt:rewritedemo:driver
 
