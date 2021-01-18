@@ -1,5 +1,6 @@
 grammar edu:umn:cs:melt:rewritedemo:abstractsyntax;
 
+imports silver:core with empty as mempty;
 imports silver:langutil;
 imports silver:langutil:pp;
 
