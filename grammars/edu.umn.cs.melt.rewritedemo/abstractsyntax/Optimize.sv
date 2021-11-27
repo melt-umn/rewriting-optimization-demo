@@ -2,10 +2,10 @@ grammar edu:umn:cs:melt:rewritedemo:abstractsyntax;
 
 partial strategy attribute optimizeStep =
   rule on Expr of
-  | add(e, const(0)) -> e
-  | add(const(0), e) -> e
-  | add(const(a), const(b)) -> const(a + b)
-  | sub(e1, e2) -> add(e1, neg(e2))
+  | addOp(e, const(0)) -> e
+  | addOp(const(0), e) -> e
+  | addOp(const(a), const(b)) -> const(a + b)
+  | subOp(e1, e2) -> addOp(e1, neg(e2))
   | neg(neg(e)) -> e
   | neg(const(a)) -> const(-a)
   end;
