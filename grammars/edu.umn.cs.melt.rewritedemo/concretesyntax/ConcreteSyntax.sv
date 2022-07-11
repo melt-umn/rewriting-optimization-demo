@@ -54,9 +54,9 @@ concrete productions top::Decl_c
 nonterminal Expr_c with ast<Expr>;
 concrete productions top::Expr_c
 | e1::Expr_c '+' e2::Expr_c
-  { abstract add; }
+  { abstract addOp; }
 | e1::Expr_c '-' e2::Expr_c
-  { abstract sub; }
+  { abstract subOp; }
 | '-' e::Expr_c
   { abstract neg; }
 | i::Constant_t

@@ -15,14 +15,14 @@ top::Expr ::=
   top.wrapPP = parens(top.pp);
 }
 
-production add
+production addOp
 top::Expr ::= e1::Expr e2::Expr
 {
   top.pp = pp"${e1.wrapPP} + ${e2.wrapPP}";
   top.freeVars = e1.freeVars ++ e2.freeVars;
 }
 
-production sub
+production subOp
 top::Expr ::= e1::Expr e2::Expr
 {
   top.pp = pp"${e1.wrapPP} - ${e2.wrapPP}";
