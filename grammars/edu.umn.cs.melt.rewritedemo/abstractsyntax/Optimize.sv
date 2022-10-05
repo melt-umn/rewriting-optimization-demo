@@ -19,7 +19,9 @@ attribute optimize occurs on FunDecl, Expr, Exprs, Decls;
 propagate optimizeStep on Expr;
 propagate optimize on FunDecl, Expr, Exprs, Decls;
 
-autocopy attribute env::[Pair<String Maybe<Expr>>] occurs on Expr, Exprs, Decls;
+inherited attribute env::[Pair<String Maybe<Expr>>] occurs on Expr, Exprs, Decls;
+propagate env on Expr, Exprs excluding letE;
+
 inherited attribute usedVars::[String] occurs on Decls;
 synthesized attribute defs::[Pair<String Maybe<Expr>>] occurs on Decls;
 
@@ -33,6 +35,7 @@ aspect production letE
 top::Expr ::= d::Decls e::Expr
 {
   d.usedVars = e.freeVars;
+  d.env = top.env;
   e.env = d.defs ++ top.env;
 }
 
