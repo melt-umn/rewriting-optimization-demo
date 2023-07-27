@@ -19,16 +19,16 @@ attribute optimize occurs on FunDecl, Expr, Exprs, Decls;
 propagate optimizeStep on Expr;
 propagate optimize on FunDecl, Expr, Exprs, Decls;
 
-inherited attribute env::[Pair<String Maybe<Expr>>] occurs on Expr, Exprs, Decls;
+inherited attribute env::[(String, Maybe<Expr>)] occurs on Expr, Exprs, Decls;
 propagate env on Expr, Exprs excluding letE;
 
 inherited attribute usedVars::[String] occurs on Decls;
-synthesized attribute defs::[Pair<String Maybe<Expr>>] occurs on Decls;
+synthesized attribute defs::[(String, Maybe<Expr>)] occurs on Decls;
 
 aspect production funDecl
 top::FunDecl ::= name::String args::[String] body::Expr
 {
-  body.env = map(pair(_, nothing()), args);
+  body.env = map(pair(fst=_, snd=nothing()), args);
 }
 
 aspect production letE
@@ -60,7 +60,7 @@ top::Decls ::= id::String e::Expr
 {
   -- Inline constants and expressions with only one use
   local inline::Boolean = null(e.freeVars) || length(filter(eq(id, _), top.usedVars)) <= 1;
-  top.defs = [pair(id, if inline then just(e) else nothing())];
+  top.defs = [(id, if inline then just(e) else nothing())];
   e.env = top.env;
 }
 
