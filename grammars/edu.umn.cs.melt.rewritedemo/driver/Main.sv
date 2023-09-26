@@ -1,6 +1,5 @@
 grammar edu:umn:cs:melt:rewritedemo:driver;
 
-imports core:monad;
 imports silver:langutil;
 imports silver:langutil:pp;
 
@@ -12,37 +11,37 @@ parser parse::Root_c {
 }
 
 function main
-IOVal<Integer> ::= args::[String] ioIn::IO
+IOVal<Integer> ::= args::[String] ioIn::IOToken
 {
   local fileName :: String = head(args);
-  local result::IOMonad<Integer> = do (bindIO, returnIO) {
-    if length(args) != 1 then {
-      printM("Usage: java -jar rewritedemo.jar [file name]\n");
+  local result::IO<Integer> = do {
+    if length(args) != 1 then do {
+      print("Usage: java -jar rewritedemo.jar [file name]\n");
       return 1;
-    } else {
-      isF::Boolean <- isFileM(fileName);
-      if !isF then {
-        printM("File \"" ++ fileName ++ "\" not found.\n");
+    } else do {
+      isF::Boolean <- isFile(fileName);
+      if !isF then do {
+        print("File \"" ++ fileName ++ "\" not found.\n");
         return 2;
-      } else {
-        text :: String <- readFileM(fileName);
-        result :: ParseResult<Root_c> = parse(text, fileName);
-        if !result.parseSuccess then {
-          printM(result.parseErrors ++ "\n");
+      } else do {
+        text :: String <- readFile(fileName);
+        let result :: ParseResult<Root_c> = parse(text, fileName);
+        if !result.parseSuccess then do {
+          print(result.parseErrors ++ "\n");
           return 3;
-        } else {
-          ast::FunDecl = result.parseTree.ast;
-          printM(show(80, ast.pp) ++ "\n");
-          printM("\n==============\n\n");
-          printM("Free variables: " ++ implode(", ", ast.freeVars) ++ "\n");
-          printM("\n==============\n\n");
-          printM(show(80, ast.optimize.pp) ++ "\n");
-          printM("\n==============\n\n");
-          printM(show(80, ast.optimizeInline.pp) ++ "\n");
+        } else do {
+          let ast::FunDecl = result.parseTree.ast;
+          print(show(80, ast.pp) ++ "\n");
+          print("\n==============\n\n");
+          print("Free variables: " ++ implode(", ", ast.freeVars) ++ "\n");
+          print("\n==============\n\n");
+          print(show(80, ast.optimize.pp) ++ "\n");
+          print("\n==============\n\n");
+          print(show(80, ast.optimizeInline.pp) ++ "\n");
           return 0;
-        }
-      }
-    }
+        };
+      };
+    };
   };
   
   return evalIO(result, ioIn);

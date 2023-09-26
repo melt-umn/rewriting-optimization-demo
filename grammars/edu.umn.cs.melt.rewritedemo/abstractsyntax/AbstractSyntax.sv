@@ -1,5 +1,6 @@
 grammar edu:umn:cs:melt:rewritedemo:abstractsyntax;
 
+imports silver:core with empty as mempty;
 imports silver:langutil;
 imports silver:langutil:pp;
 
@@ -14,14 +15,14 @@ top::Expr ::=
   top.wrapPP = parens(top.pp);
 }
 
-production add
+production addOp
 top::Expr ::= e1::Expr e2::Expr
 {
   top.pp = pp"${e1.wrapPP} + ${e2.wrapPP}";
   top.freeVars = e1.freeVars ++ e2.freeVars;
 }
 
-production sub
+production subOp
 top::Expr ::= e1::Expr e2::Expr
 {
   top.pp = pp"${e1.wrapPP} - ${e2.wrapPP}";
@@ -48,7 +49,7 @@ top::Expr ::= d::Decls e::Expr
 {
   top.pp = pp"let ${nestlines(2, ppImplode(line(), d.pps))}in ${e.pp} end";
   top.wrapPP = top.pp;
-  top.freeVars = d.freeVars ++ removeAllBy(stringEq, map(fst, d.defs), e.freeVars);
+  top.freeVars = d.freeVars ++ removeAll(map(fst, d.defs), e.freeVars);
 }
 
 production var
@@ -89,7 +90,7 @@ production seq
 top::Decls ::= d1::Decls d2::Decls
 {
   top.pps = d1.pps ++ d2.pps;
-  top.freeVars = d1.freeVars ++ removeAllBy(stringEq, map(fst, d1.defs), d2.freeVars);
+  top.freeVars = d1.freeVars ++ removeAll(map(fst, d1.defs), d2.freeVars);
 }
 
 production empty
@@ -112,5 +113,5 @@ production funDecl
 top::FunDecl ::= name::String args::[String] body::Expr
 {
   top.pp = pp"fun ${text(name)}(${ppImplode(pp", ", map(text, args))}) =${nest(2, cat(line(), body.pp))};";
-  top.freeVars = removeAllBy(stringEq, args, body.freeVars);
+  top.freeVars = removeAll(args, body.freeVars);
 }
