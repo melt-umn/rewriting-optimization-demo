@@ -2,11 +2,11 @@ grammar edu:umn:cs:melt:rewritedemo:abstractsyntax;
 
 partial strategy attribute optimizeStep =
   rule on Expr of
-  | addOp(e, const(0)) -> e
-  | addOp(const(0), e) -> e
+  | addOp(e, const(0)) -> ^e
+  | addOp(const(0), e) -> ^e
   | addOp(const(a), const(b)) -> const(a + b)
-  | subOp(e1, e2) -> addOp(e1, neg(e2))
-  | neg(neg(e)) -> e
+  | subOp(e1, e2) -> addOp(^e1, neg(^e2))
+  | neg(neg(e)) -> ^e
   | neg(const(a)) -> const(-a)
   end;
 strategy attribute optimize =
@@ -60,19 +60,19 @@ top::Decls ::= id::String e::Expr
 {
   -- Inline constants and expressions with only one use
   local inline::Boolean = null(e.freeVars) || length(filter(eq(id, _), top.usedVars)) <= 1;
-  top.defs = [(id, if inline then just(e) else nothing())];
+  top.defs = [(id, if inline then just(^e) else nothing())];
   e.env = top.env;
 }
 
 partial strategy attribute inlineStep =
   rule on top::Expr of
   | var(n) when lookup(n, top.env) matches just(just(e)) -> e
-  | letE(empty(), e) -> e
+  | letE(empty(), e) -> ^e
   end <+
   rule on top::Decls of
   | decl(id, e) when !contains(id, top.usedVars) -> empty()
-  | seq(d, empty()) -> d
-  | seq(empty(), d) -> d
+  | seq(d, empty()) -> ^d
+  | seq(empty(), d) -> ^d
   end
   occurs on Expr, Decls;
 strategy attribute optimizeInline =
